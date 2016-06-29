@@ -1,0 +1,21 @@
+Index,Scope,Name,Active
+1,HIT,brand,True
+2,HIT,language,True
+3,HIT,country,True
+4,HIT,siteTypeLevel,True
+5,HIT,pageCategory,True
+6,USER,uiGender,True
+7,USER,uiPostalCode,True
+8,USER,uiCity,True
+9,SESSION,uiLoggedStatus,True
+10,USER,uiBirthday,True
+11,SESSION,uiUser,True
+12,HIT,uiEmailId,True
+13,HIT,searchCategory,True
+14,HIT,searchKeyword,True
+15,HIT,Custom dimension #15,True
+16,HIT,numberResults,True
+17,HIT,requestType,True
+18,HIT,newsletterSubscription,True
+19,HIT,transactionShippingMethod,True
+20,HIT,sampleCategory,False
