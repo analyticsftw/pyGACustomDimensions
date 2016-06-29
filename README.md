@@ -7,7 +7,7 @@ Reference:
 - Getting started with the Google API Python client: [Getting started with the Google API](https://developers.google.com/api-client-library/python/start/get_started)
 
 Requires:
-- A Google Cloud Platform project with a set of credentials and a key (.p12 or JSON, although this project uses .p12).
+- A Google Cloud Platform project with the Analytics API enabled and a set of credentials and a key (.p12 or JSON, although this project uses .p12).
   - See [Google IAM authentication](https://console.cloud.google.com/iam-admin/iam/iam-zero)
 - A Google Analytics account with access granted to the e-mail address set in the credentials
 - Python 3 or higher
