@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Google Analytics custom dimension management with Python by analyticsftw</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Google Analytics custom dimension management with Python</h1>
+        <p>This set of Python scripts allows for the mass creation and modification of Google Analytics custom dimensions, using the Management API.</p>
+
+        <p class="view"><a href="https://github.com/analyticsftw/pythongoogleanalyticscustomdimensions">View the Project on GitHub <small>analyticsftw/pythongoogleanalyticscustomdimensions</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/analyticsftw/pythongoogleanalyticscustomdimensions/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/analyticsftw/pythongoogleanalyticscustomdimensions/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/analyticsftw/pythongoogleanalyticscustomdimensions">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h3>
+<a id="welcome" class="anchor" href="#welcome" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Welcome.</h3>
+
+<p>I work with Google Analytics a lot and I have customers working with many custom dimensions.</p>
+
+<p>Unfortunately, for customers with heavy property structure requirements, (ensure a tagging strategy across multiple brands and countries for instance) sites and apps need to implement ranges of custom dimensions (and metrics to a lesser extent).</p>
+
+<p>Let’s say for instance that brand flagship websites use the same first 10 custom dimensions with strict compliance on these values.
+Now let’s say that local versions of the same brand are not <em>required</em> to implement the first 10 custom dimensions but they can merrily use custom dims 11-20 (or higher if Premium). One of these days they will end up playing ball and eventually implement 1 through 10. Some day.
+Anyhow, the issue in the above scenario is that you have to create 10 blank /inactive custom dimensions before you can start defining 11-20</p>
+
+<p>For the time being, using the Management API, one can create custom dimensions (and their indexes) in a linear fashion using <em>insert</em> but one can also modify existing custom dimensions using <em>update</em> or <em>patch</em> and passing along the customDimensionId parameter. </p>
+
+<p>The scripts in this project offer an alternative, which is to run <em>insert</em> loops through the API to create 20/200 inactive spare custom dimensions and then using a CSV parser to use <em>update</em> to create actual custom dimension definitions.</p>
+
+<p>One script can pull all custom dimensions from your account and dump them as CSV files.
+A second script auto-populates all custom dimensions in your target property.
+A third script uses a CSV file (hint hint) to upload and update custom dimensions for a given dimension.</p>
+
+<h3>
+<a id="author" class="anchor" href="#author" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Author</h3>
+
+<p>This project was authored by Julien Coquet (<a href="https://github.com/analyticsftw" class="user-mention">@analyticsftw</a>), a Google Analytics consultant, certified partner and Top Contributor.
+Find me on Twitter at <a href="https://twitter.com/juliencoquet">https://twitter.com/juliencoquet</a></p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/analyticsftw">analyticsftw</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
