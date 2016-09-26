@@ -3,6 +3,8 @@ and pull the list of accounts your email address can access.
 
 Can be adapted to pull a CSV list of all property IDs.
 """
+__author__      = "Julien Coquet"
+__copyright__   = "Copyright 2016, MIT License"
 
 import argparse
 import csv
