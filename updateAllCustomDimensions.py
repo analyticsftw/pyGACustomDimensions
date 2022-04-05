@@ -35,7 +35,7 @@ def main():
   # The file token.json stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first
   # time.
-  if os.path.exists(cred_file):
+  if not os.path.exists(cred_file):
     print ("No credentials file found; create one by visiting the GCP console and creating a new project.\nVisit https://console.cloud.google.com/apis/credentials to create a new OAuth key and save it locally as tokens/credentials.json")
     sys.exit()
   if os.path.exists(token_file):
