@@ -3,34 +3,21 @@
     imported from a CSV file
 """
 
+import csv
+import os.path
+import re
+import sys
+import argparse
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from urllib.error import HTTPError
 
-import csv, os, sys
-
-from apiclient.discovery import build
-from oauth2client.service_account import ServiceAccountCredentials
-
-import httplib2
-from oauth2client import client
-from oauth2client import file
-from oauth2client import tools
-
-
-# Settings
-import config
-
-
-def get_service(api_name, api_version, scope, key_file_location, service_account_email):
-    #credentials = ServiceAccountCredentials.from_p12_keyfile(
-    # service_account_email, key_file_location, scopes=scope
-    # )
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(
-      key_file_location, scopes=scope
-    )
-    http = credentials.authorize(httplib2.Http())
-    # Build the Google API service object.
-    service = build(api_name, api_version, http=http)
-    return service
-
+SCOPES = [
+  'https://www.googleapis.com/auth/analytics.readonly',
+  'https://www.googleapis.com/auth/analytics.edit'
+]
 
 def progress(count, total, suffix=''):
     bar_len = 60
@@ -44,45 +31,59 @@ def progress(count, total, suffix=''):
 
 
 def main():
-    # Refer to the config.py settings file for credentials
-    service_account_email = config.apiSettings['service_account_email']
-    key_file_location = config.apiSettings['key_file_location']
-    source_csv = input('Enter the path and filename of the CSV template (e.g. ./inputs/cdim.csv): ')
-    if not os.path.isfile(source_csv):
-      print("File " + source_csv + " not found. Exiting.")
-      exit()
-    propertyId = input('Enter the property ID (in the format UA-XXXXXXXX-Y): ')
-    if not propertyId:
-      print("You forgot to enter a GA property ID. Start again.")
-      exit()
-    separator = input('Which separator are you using in the CSV file? (,/;): ')
-    if not separator:
-      print("No separator specified. Defaulting to ','")
-      separator = ','
-    # Break down the UA ID into chunks
-    account_bits = propertyId.split('-')
-    accountId = account_bits[1]
-    import re
-    pattern = re.compile("^[0-9]+$")
-    match = pattern.search(accountId)
-    if not match:
-      print("Your account ID (" + accountId + ") does not seem valid")
-      exit()
-    print("Updating custom dimensions from CSV")
-    scope = ['https://www.googleapis.com/auth/analytics.edit']
-    service = get_service('analytics', 'v3', scope, key_file_location, service_account_email)
-    with open(source_csv) as csvfile:
-      # Get the number of lines in the CSV
-      num_line = len(csvfile.readlines())
-      csvfile.seek(0)
-      myreader = csv.reader(csvfile, delimiter=separator)
-      # Skip the header
-      next(myreader)
-      i = 0
-      for row in myreader:
-        customDimensionId = ("ga:dimension" + str(row[0]))
-        # Send Google Analytics Management API call to update the custom dimension from CSV row
-        new_dim = service.management().customDimensions().update(
+  
+  cred_file  = "tokens/credentials.json"
+  token_file = "tokens/ga_management.json"
+  creds = None
+  # The file token.json stores the user's access and refresh tokens, and is
+  # created automatically when the authorization flow completes for the first
+  # time.
+  if os.path.exists(cred_file):
+    print ("No credentials file found; create one by visiting the GCP console and creating a new project.\nVisit https://console.cloud.google.com/apis/credentials to create a new OAuth key and save it locally as tokens/credentials.json")
+    sys.exit()
+  if os.path.exists(token_file):
+    creds = Credentials.from_authorized_user_file(token_file, SCOPES)
+    print ("we have creds")
+  # If there are no (valid) credentials available, let the user log in.
+  if not creds or not creds.valid:
+    if creds and creds.expired and creds.refresh_token:
+      creds.refresh(Request())
+    else:
+      flow = InstalledAppFlow.from_client_secrets_file(cred_file, SCOPES)
+      creds = flow.run_local_server(port=0)
+      # Save the credentials for the next run
+    with open(token_file, 'w') as token:
+      token.write(creds.to_json())
+
+  # Authenticate and construct service.
+  print("Connecting to Google Analytics API for authentication")
+  service = build('analytics', 'v3', credentials=creds)
+
+  sourceCSV = input('Enter the path and filename of the CSV template (e.g. ./inputs/cdim.csv): ')
+  if not os.path.isfile(sourceCSV):
+    print("File not found: " + sourceCSV)
+    sys.exit()
+  propertyId = input('Enter the property ID (in the format UA-XXXXXXXX-YY): ')
+  if "UA-" not in propertyId:
+    print("Invalid property ID. Please try again with a property ID in the format UA-XXXXXXXX-YY.")
+    sys.exit()
+  separator = input('Which separator are you using in the CSV file? (,/;): ')
+  if separator == "":
+    separator = ","
+    print ("Using default separator: " + separator)
+  accountBits = propertyId.split('-')
+  accountId = accountBits[1]
+  print("Updating custom dimensions from CSV")
+  with open(sourceCSV) as csvfile:
+    numline = len(csvfile.readlines())
+    csvfile.seek(0)
+    myreader = csv.reader(csvfile, delimiter=separator)
+    next(myreader)
+    i = 0
+    for row in myreader:
+      customDimensionId = ("ga:dimension" + str(row[0]))
+      try:
+        newDim = service.management().customDimensions().update(
           accountId=accountId,
           webPropertyId=propertyId,
           customDimensionId= customDimensionId,
@@ -92,11 +93,11 @@ def main():
             'active': row[3]
           }       
         ).execute()
-        # Update progress bar (purely cosmetic)
-        progress(i,num_line)
-        i += 1
-      print ("\n\nDone.")
-
-
+      except HTTPError as err:
+        print("Error for property %s : %s " % (propertyId, err))
+      progress(i,numline)
+      i += 1
+    print ("\n\nDone.")
+ 
 if __name__ == '__main__':
   main()

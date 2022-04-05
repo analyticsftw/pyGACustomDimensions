@@ -3,6 +3,6 @@
     Store your project key and reference it here
 """
 apiSettings = dict(
-    service_account_email = 'myproject@projectid.iam.gserviceaccount.com',
-    key_file_location = './secret.p12'
+    service_account_email = 'python-for-ga-management-api@cogent-sweep-279113.iam.gserviceaccount.com',
+    key_file_location = './secret.json'
 )
