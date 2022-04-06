@@ -1,10 +1,7 @@
 """ Filling a Google Analytics property with custom dimensions using the Management API."""
 
-import csv
 import os.path
-import re
 import sys
-import argparse
 from click import prompt
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -18,14 +15,12 @@ SCOPES = [
 ]
 
 def progress(count, total, suffix=''):
-    bar_len = 60
-    filled_len = int(round(bar_len * count / float(total)))
-
-    percents = round(100.0 * count / float(total), 1)
-    bar = '=' * filled_len + '-' * (bar_len - filled_len)
-
-    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
-    sys.stdout.flush()
+  bar_len = 60
+  filled_len = int(round(bar_len * count / float(total)))
+  percents = round(100.0 * count / float(total), 1)
+  bar = '=' * filled_len + '-' * (bar_len - filled_len)
+  sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
+  sys.stdout.flush()
     
 def main():
   cred_file  = "tokens/credentials.json"
@@ -34,27 +29,36 @@ def main():
   # The file token.json stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first
   # time.
-  if not os.path.exists(cred_file):
+  if os.path.exists(cred_file):
+    # All good
+    print("Credentials file found.")
+  else:
     print ("No credentials file found; create one by visiting the GCP console and creating a new project.\nVisit https://console.cloud.google.com/apis/credentials to create a new OAuth key and save it locally as tokens/credentials.json")
     sys.exit()
   if os.path.exists(token_file):
       creds = Credentials.from_authorized_user_file(token_file, SCOPES)
   # If there are no (valid) credentials available, let the user log in.
   if not creds or not creds.valid:
+      print ("Refreshing credentials for required scopes")
       if creds and creds.expired and creds.refresh_token:
-          creds.refresh(Request())
+        creds.refresh(Request())
       else:
-          flow = InstalledAppFlow.from_client_secrets_file(
-              cred_file, SCOPES)
-          creds = flow.run_local_server(port=0)
+        flow = InstalledAppFlow.from_client_secrets_file(
+          cred_file, SCOPES)
+        creds = flow.run_local_server(port=0)
       # Save the credentials for the next run
       with open(token_file, 'w') as token:
-          token.write(creds.to_json())
+        token.write(creds.to_json())
   
+  # Inputs
   propertyId = input('Enter the property ID (in the format UA-XXXXXXXX-Y): ')
+  if "UA-" not in propertyId:
+    print("Invalid property ID. Please try again with a property ID in the format UA-XXXXXXXX-YY.")
+    sys.exit()
   accountBits = propertyId.split('-')
   accountId = accountBits[1]
   isPremium = input('Is this a Premium property? (y/n): ')
+  if isPremium == '': isPremium = 'n'
   dimRange = 200 if isPremium == "y" else 20
   isActive = input('Leave all custom dimensions active? (y/n): ')
   dimActive = True if (isActive == "y") else False
@@ -70,26 +74,27 @@ def main():
     webPropertyId=propertyId
   ).execute()
   
-  time.sleep(10)  
+
+  time.sleep(2)  
   nbDims = dimensions.get("totalResults")
   print("Found " + str(nbDims) + " custom dims")
   if nbDims < dimRange+1:
-      nbNewDims = dimRange - nbDims
-      print("Creating " + str(nbNewDims) + " custom dimensions")
-      
-      for i in range(nbDims+1,dimRange+1):
-          newDim = service.management().customDimensions().insert(
-            accountId=accountId,
-            webPropertyId=propertyId,
-            body={
-                'name':"Spare custom dimension #"+ str(i),
-                'scope': isType,
-                'active': dimActive
-            }            
-          ).execute()
-          if i %10 == 0:
-              time.sleep(10)
-          progress(i,nbNewDims)
-      print ("\n\nDone.")
+    nbNewDims = dimRange - nbDims
+    print("Creating " + str(nbNewDims) + " custom dimensions")
+    for i in range(nbDims+1,dimRange+1):
+        newDim = service.management().customDimensions().insert(
+          accountId=accountId,
+          webPropertyId=propertyId,
+          body={
+            'name':"Spare custom dimension #"+ str(i),
+            'scope': isType,
+            'active': dimActive
+          }            
+        ).execute()
+        if i %10 == 0:
+            # Pause every now and then to avoid hitting Google Analytics Management API quotas 
+            time.sleep(5)
+        progress(i,nbNewDims)
+  print ("\n\nDone.")
 if __name__ == '__main__':
   main()

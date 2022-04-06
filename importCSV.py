@@ -5,9 +5,7 @@
 
 import csv
 import os.path
-import re
 import sys
-import argparse
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -20,14 +18,12 @@ SCOPES = [
 ]
 
 def progress(count, total, suffix=''):
-    bar_len = 60
-    filled_len = int(round(bar_len * count / float(total)))
-
-    percents = round(100.0 * count / float(total), 1)
-    bar = '=' * filled_len + '-' * (bar_len - filled_len)
-
-    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
-    sys.stdout.flush()
+  bar_len = 60
+  filled_len = int(round(bar_len * count / float(total)))
+  percents = round(100.0 * count / float(total), 1)
+  bar = '=' * filled_len + '-' * (bar_len - filled_len)
+  sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
+  sys.stdout.flush()
 
 
 def main():
@@ -38,27 +34,32 @@ def main():
   # The file token.json stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first
   # time.
-  if not os.path.exists(cred_file):
+  if os.path.exists(cred_file):
+    # All good
+    print("Credentials file found.")
+  else:
     print ("No credentials file found; create one by visiting the GCP console and creating a new project.\nVisit https://console.cloud.google.com/apis/credentials to create a new OAuth key and save it locally as tokens/credentials.json")
     sys.exit()
   if os.path.exists(token_file):
-    creds = Credentials.from_authorized_user_file(token_file, SCOPES)
-    print ("we have creds")
+      creds = Credentials.from_authorized_user_file(token_file, SCOPES)
   # If there are no (valid) credentials available, let the user log in.
   if not creds or not creds.valid:
+    print ("Refreshing credentials for required scopes")
     if creds and creds.expired and creds.refresh_token:
-      creds.refresh(Request())
+        creds.refresh(Request())
     else:
-      flow = InstalledAppFlow.from_client_secrets_file(cred_file, SCOPES)
-      creds = flow.run_local_server(port=0)
-      # Save the credentials for the next run
+        flow = InstalledAppFlow.from_client_secrets_file(
+            cred_file, SCOPES)
+        creds = flow.run_local_server(port=0)
+    # Save the credentials for the next run
     with open(token_file, 'w') as token:
-      token.write(creds.to_json())
+        token.write(creds.to_json())
 
   # Authenticate and construct service.
   print("Connecting to Google Analytics API for authentication")
   service = build('analytics', 'v3', credentials=creds)
 
+  # Inputs 
   sourceCSV = input('Enter the path and filename of the CSV template (e.g. ./inputs/cdim.csv): ')
   if not os.path.isfile(sourceCSV):
     print("File not found: " + sourceCSV)
@@ -73,7 +74,10 @@ def main():
     print ("Using default separator: " + separator)
   accountBits = propertyId.split('-')
   accountId = accountBits[1]
+
+  # GA API calls
   print("Updating custom dimensions from CSV")
+  # Read each custom dimension defintion from the CSV file
   with open(sourceCSV) as csvfile:
     numline = len(csvfile.readlines())
     csvfile.seek(0)
@@ -94,7 +98,7 @@ def main():
           }       
         ).execute()
       except HTTPError as err:
-        print("Error for property %s : %s " % (propertyId, err))
+        print("Error for property %s (index %s): %s " % (propertyId, row[0], err))
       progress(i,numline)
       i += 1
     print ("\n\nDone.")

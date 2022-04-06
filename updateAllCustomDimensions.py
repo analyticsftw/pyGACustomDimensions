@@ -1,10 +1,7 @@
 """ Fills up your Google Analytics property with custom dimensions """
 
-import csv
 import os.path
-import re
 import sys
-import argparse
 import time
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -18,14 +15,12 @@ SCOPES = [
 ]
 
 def progress(count, total, suffix=''):
-    bar_len = 60
-    filled_len = int(round(bar_len * count / float(total)))
-
-    percents = round(100.0 * count / float(total), 1)
-    bar = '=' * filled_len + '-' * (bar_len - filled_len)
-
-    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
-    sys.stdout.flush()
+  bar_len = 60
+  filled_len = int(round(bar_len * count / float(total)))
+  percents = round(100.0 * count / float(total), 1)
+  bar = '=' * filled_len + '-' * (bar_len - filled_len)
+  sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
+  sys.stdout.flush()
 
 def main():
   
@@ -40,7 +35,6 @@ def main():
     sys.exit()
   if os.path.exists(token_file):
     creds = Credentials.from_authorized_user_file(token_file, SCOPES)
-    print ("we have creds")
   # If there are no (valid) credentials available, let the user log in.
   if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
@@ -53,11 +47,11 @@ def main():
       token.write(creds.to_json())
 
   
+  # Variable inputs
   propertyId = input('Enter the property ID (in the format UA-XXXXXXXX-Y): ')
   if "UA-" not in propertyId:
     print("Invalid property ID. Please try again with a property ID in the format UA-XXXXXXXX-YY.")
     sys.exit()
-  
   accountBits = propertyId.split('-')
   accountId = accountBits[1]
   isPremium = input('Is this a Premium property? (y/n): ')

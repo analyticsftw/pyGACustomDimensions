@@ -32,12 +32,16 @@ def main():
   # created automatically when the authorization flow completes for the first
   # time.
   if os.path.exists(cred_file):
+    # All good
+    print("Credentials file found.")
+  else:
     print ("No credentials file found; create one by visiting the GCP console and creating a new project.\nVisit https://console.cloud.google.com/apis/credentials to create a new OAuth key and save it locally as tokens/credentials.json")
     sys.exit()
   if os.path.exists(token_file):
       creds = Credentials.from_authorized_user_file(token_file, SCOPES)
   # If there are no (valid) credentials available, let the user log in.
   if not creds or not creds.valid:
+      print ("Refreshing credentials for required scopes")
       if creds and creds.expired and creds.refresh_token:
           creds.refresh(Request())
       else:
